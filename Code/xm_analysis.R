@@ -44,17 +44,21 @@ dat %>%
 ggsave(here::here("Figures","boxplot_p_arg.png"), height = 5, width = 7)
 
 # ---------------------------------------------------------------------------- #
-
-mods <- lapply(c("Fly_Total", "P_arg","Fly_Male","Mosquito_Female"),
+# Fit models for four outcomes
+mods <- lapply(c("Fem_Total", "P_arg","Fly_Male","Mosquito_Female"),
                compare_methods)
-
 # Note that the model fit to female mosquitoes does not converge
 
-lapply(mods, function(mod) print(mod$contrasts))
-lapply(mods, function(mod) print(mod$emm))
+# Summary of fitted IRRs between MVA/PKP and CDC
+lapply(mods, function(mod) print(mod$summary))
 
+# Pairwise comparisons between methods
+lapply(mods, function(mod) print(mod$contrasts))
+
+# Marginal mean counts (averaging over household variation) by method
 plot.list <- lapply(mods, function(mod) print(mod$p))
-grid.arrange(grobs = plot.list)
+plot.grid <- grid.arrange(grobs = plot.list)
+ggsave(here::here("Figures","emmeans_all_outcomes.png"), plot.grid, height = 8, width = 8)
 
 ################################################################################
 
