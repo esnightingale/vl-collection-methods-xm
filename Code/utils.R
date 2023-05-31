@@ -1,9 +1,12 @@
 
 make_df <- function(mod){
   
+  mod.ci <- confint(mod)[-1,]
+  colnames(mod.ci) <- c("conf.low","conf.high")
+  
   df <- tidy(mod) %>% 
     filter(effect == "fixed") %>% 
-    bind_cols(m1.ci[-1,]) %>% 
+    bind_cols(mod.ci) %>% 
     mutate(across(c(estimate,conf.low,conf.high), function(x) round(exp(x),3)),
            IRR = paste0(estimate," (", conf.low, ", ", conf.high, ")")) %>% 
     select(term, IRR, statistic, p.value)
@@ -22,17 +25,19 @@ compare_methods <- function(var){
   
   # Marginal means per method 
   emm <- emmeans(mod,
-                 pairwise ~ "Collection_Method",
+                 "Collection_Method",
+                 # pairwise ~ "Collection_Method",
                  type = "response")
   
   # Make df with CI
   emm.df <-
-    emm$emmeans %>%
+    emm %>%
     broom::tidy() %>% 
-    left_join(broom::tidy(confint(emm$emmeans)))
+    left_join(broom::tidy(confint(emm)))
   
   # Pairwise contrasts
-  emm.contr <- emm$contrasts %>%
+  emm.contr <- emm %>%
+    contrast(method = "pairwise") %>% 
     broom::tidy() %>% 
     mutate(outcome = var) %>% 
     select(outcome, contrast, ratio, std.error, adj.p.value)
