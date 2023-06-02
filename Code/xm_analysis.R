@@ -45,6 +45,7 @@ ggsave(here::here("Figures","boxplot_p_arg.png"), height = 5, width = 7)
 
 # ---------------------------------------------------------------------------- #
 # Fit models for four outcomes
+
 mods <- lapply(c("Fem_Total", "P_arg","Fly_Male","Mosquito_Female"),
                compare_methods)
 # Note that the model fit to female mosquitoes does not converge
@@ -59,6 +60,51 @@ lapply(mods, function(mod) print(mod$contrasts))
 plot.list <- lapply(mods, function(mod) print(mod$p))
 plot.grid <- grid.arrange(grobs = plot.list)
 ggsave(here::here("Figures","emmeans_all_outcomes.png"), plot.grid, height = 8, width = 8)
+
+# ---------------------------------------------------------------------------- #
+# Compare proportion bloodfed between methods
+
+mod2 <- glmer(cbind(Arg_Blood,P_arg) ~ Collection_Method + (1|House_ID),
+                weights = P_arg,
+                family = "binomial",
+                dat)
+
+summ.df <- make_df(mod2)
+print(summ.df)
+
+# Marginal means per method 
+emm <- emmeans(mod2,
+               "Collection_Method",
+               type = "response")
+
+# Make df with CI
+emm.df <-
+  emm %>%
+  broom::tidy() %>% 
+  left_join(broom::tidy(confint(emm)))
+
+# Pairwise contrasts
+emm.contr <- emm %>%
+  contrast(method = "pairwise") %>% 
+  broom::tidy() %>% 
+  mutate(outcome = "Blood fed p") %>% 
+  select(outcome, contrast, odds.ratio, std.error, adj.p.value)
+
+print(emm.contr)
+
+# Plot EMMs
+emm.df %>% 
+  ggplot(aes(Collection_Method, prob, 
+             ymin=conf.low, ymax=conf.high,
+             colour = Collection_Method)) +
+  geom_errorbar(width = 0.2) +
+  geom_point() +
+  guides(colour = "none") +
+  labs(x = "Collection Method",
+       y = "Marginal mean",
+       title = "Proportion of caught female P. argentipes found to be blood-fed") 
+
+ggsave(here::here("Figures","emmeans_prop_bloodfed.png"), height = 5, width = 7)
 
 ################################################################################
 
