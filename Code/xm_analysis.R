@@ -63,7 +63,9 @@ lapply(mods, function(mod) print(mod$contrasts))
 # Marginal mean counts (averaging over household variation) by method
 plot.list <- lapply(mods, function(mod) print(mod$p))
 plot.grid <- grid.arrange(grobs = plot.list)
-ggsave(here::here("Figures","emmeans_all_outcomes.png"), plot.grid, height = 8, width = 8)
+ggsave(here::here("Figures","emmeans_all_outcomes.png"), 
+       plot.grid, height = 8, width = 8)
 
+################################################################################
 ################################################################################
 
